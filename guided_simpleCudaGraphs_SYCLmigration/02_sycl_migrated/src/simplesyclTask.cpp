@@ -1,3 +1,9 @@
+//=========================================================
+// Modifications Copyright © 2022 Intel Corporation
+//
+// SPDX-License-Identifier: BSD-3-Clause
+//=========================================================
+
 /* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -84,7 +90,7 @@ void reduce(float *inputVec, double *outputVec, size_t inputSize,
       item_ct1.get_group(2) < outputSize) {
     beta = 0.0;
     
-    int cta_size = cta.get_local_range(2);      // added 1007 - size not supported
+    int cta_size = cta.get_local_linear_range(); 
     
     for (int i = 0; i < cta_size;
          i += tile_sg.get_local_linear_range()) {
@@ -146,7 +152,7 @@ void reduceFinal(double *inputVec, double *result,
     for (int offset = tile_sg.get_local_linear_range() / 2;
          offset > 0; offset /= 2) {
       
-      temp_sum += shift_group_left(tile_sg, temp_sum, offset);    // changed 1007 - shfl_down not supported 
+      temp_sum += tile_sg.shuffle_down(temp_sum, offset);   
     }
   }
   // write result for this block to global mem
@@ -170,8 +176,8 @@ void myHostNodeCallback(void *data) {
 void syclTaskFlowManual(float *inputVec_h, float *inputVec_d, double *outputVec_d,
                       double *result_d, size_t inputSize, size_t numOfBlocks, sycl::queue q_ct1) {
    
-  tf::Executor exe;
   tf::Taskflow tflow;
+  tf::Executor exe;
   
   double result_h = 0.0;
   size_t sf_Task = 0, tf_Task = 0;
@@ -209,13 +215,11 @@ void syclTaskFlowManual(float *inputVec_h, float *inputVec_d, double *outputVec_
   
   sf_Task = sf.num_tasks();
   },q_ct1).name("syclKernelTask");
-  
-  callBackData_t hostFnData;
-  hostFnData.fn_name = (char *)malloc(10 * sizeof(char));
-  hostFnData.data = (double *)malloc(1 * sizeof(double));
-  hostFnData.fn_name = "syclTaskFlowManual";
+
+  callBackData_t hostFnData = {0};
   hostFnData.data = &result_h;
-  
+  hostFnData.fn_name = "syclTaskFlowManual";
+
   tf::Task syclHostTask = tflow.emplace([&](){
     myHostNodeCallback(&hostFnData);
   }).name("syclHostTask");
