@@ -33,8 +33,6 @@
 
 #include <sycl/sycl.hpp>
 #include <dpct/dpct.hpp>
-#include <cooperative_groups.h>
-#include <helper_cuda.h>
 #include <vector>
 #include <chrono>
 
