@@ -12,12 +12,9 @@ The `simpleCudaGraphs` sample demonstrates the migration of CUDA Graph explicit 
 
 ## Purpose
 
-Optical flow method is based on two assumptions: brightness constancy and spatial
-flow smoothness. These assumptions are combined in a single energy functional and
-solution is found as its minimum point. The sample includes
-both parallel and serial computation, which allows for direct results comparison. The parallel implementation demonstrates the use of Texture memory, shared memory, and cooperative groups. Input to the sample is two image frames and output is the absolute difference value(L1 error) between serial and parallel computation.
+The sample shows the migration of simple explicit CUDA Graph API's such as cudaGraphCreate, cudaGraphAddMemcpyNode, cudaGraphClone etc, to SYCL equivalent API's using [Taskflow](https://github.com/taskflow/taskflow) programming Model. The parallel implementation demonstrates the use of CUDA Graph API's, CUDA streams, shared memory, cooperative groups and warp level primitives. 
 
-This sample contains four versions in the following folders:
+This sample contains two versions in the following folders:
 
 | Folder Name                   | Description
 |:---                           |:---
@@ -36,21 +33,8 @@ This sample contains four versions in the following folders:
 
 ## Key Implementation Details
 
-HSOptical flow involves image downscaling and upscaling, image warping, computing derivatives, and computation of jacobi iteration.
+SYCL simpleCudaGraphs sample performs reduction operarion to obtain the sum value from 16777216 number of elements in two different computational kernels reduce and reduceFinal. These kernels are scheduled through taskflow which develops a simple and powerful task programming model to enable efficient implementations of heterogeneous decomposition strategies and leverages both static and dynamic task graph constructions to incorporate computational patterns.
 
->**Note**: This sample demonstrates the CUDA HSOptical Flow Estimation using key concepts such as Image processing, Texture memory, shared memory, and cooperative groups.
-
-Image scaling downscaling or upscaling aims to preserve the visual appearance of the original image when it is resized, without changing the amount of data in that image. An image with a resolution of width × height will be resized to new_width × new_height with a scale factor. A scale factor less than 1 indicates shrinking while a scale factor greater than 1 indicates stretching.
-
-Image warping is a transformation that maps all positions in source image plane to positions in a destination plane. 
-
-Texture addressing mode is set to Clamp, texture coordinates are unnormalized. Clamp addressing mode to handle out-of-range coordinates. It eases computing derivatives and warping whenever we need to reflect out-of-range coordinates across borders.
-
-Once the warped image is created, derivatives are computed. For each pixel, the required stencil points from texture are fetched and convolved them with filter kernel. In terms of CUDA, we can create a thread for each pixel. This thread fetches required data and computes derivative.
-
-The next step involves several Jacobi iterations. Border conditions are explicitly handled within the kernel. The number of iterations is fixed during computations. This eliminates the need for checking error on every iteration. The required number of iterations can be determined experimentally. To perform one iteration of Jacobi method in a particular point, we need to know results of previous iteration for its four neighbors. If we simply load these values from global memory each value will be loaded four times. We store these values in shared memory. This approach reduces number of global memory accesses, provides better coalescing, and improves overall performance.
-
-Prolongation is performed with bilinear interpolation followed by scaling. and are handled independently. For each output pixel there is a thread that fetches the output value from the texture and scales it.
 
 ## Set Environment Variables
 
