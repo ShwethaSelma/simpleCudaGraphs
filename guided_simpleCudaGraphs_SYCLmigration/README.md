@@ -56,7 +56,7 @@ Prolongation is performed with bilinear interpolation followed by scaling. and a
 
 When working with the command-line interface (CLI), you should configure the oneAPI toolkits using environment variables. Set up your CLI environment by sourcing the `setvars` script every time you open a new terminal window. This practice ensures that your compiler, libraries, and tools are ready for development.
 
-## Build the `HSOpticalFlow` Sample for CPU and GPU
+## Build the `simpleCudaGraphs` Sample for CPU and GPU
 
 > **Note**: If you have not already done so, set up your CLI
 > environment by sourcing  the `setvars` script in the root of your oneAPI installation.
@@ -79,7 +79,7 @@ When working with the command-line interface (CLI), you should configure the one
    $ make
    ```
 
-   By default, this command sequence will build the `02_sycl_dpct_migrated`, `03_sycl_migrated`, and `04_sycl_migrated_optimized` versions of the program.
+   By default, this command sequence will build the `02_sycl_migrated` versions of the program.
 
 #### Troubleshooting
 
@@ -91,31 +91,19 @@ make VERBOSE=1
 If you receive an error message, troubleshoot the problem using the **Diagnostics Utility for Intel® oneAPI Toolkits**. The diagnostic utility provides configuration and system checks to help find missing dependencies, permissions errors, and other issues. See the [Diagnostics Utility for Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/diagnostic-utility-user-guide/top.html) for more information on using the utility.
 
 
-## Run the `HSOpticalFlow` Sample
+## Run the `simpleCudaGraphs` Sample
 
 ### On Linux
 
 You can run the programs for CPU and GPU. The commands indicate the device target.
 
-1. Run `02_sycl_dpct_migrated` for CPU and GPU.
-    ```
-    make run_sdm_cpu
-    make run_sdm_gpu
-    ```
-
-2. Run `03_sycl_migrated` for CPU and GPU.
+1. Run `02_sycl_migrated` for CPU and GPU.
     ```
     make run_cpu
     make run_gpu
     ```
 
-3. Run `04_sycl_migrated_optimized` for CPU and GPU.
-    ```
-    make run_smo_cpu
-    make run_smo_gpu
-    ```
-
-### Build and Run the `HSOpticalFlow` Sample in Intel® DevCloud
+### Build and Run the `simpleCudaGraphs` Sample in Intel® DevCloud
 
 When running a sample in the Intel® DevCloud, you must specify the compute node (CPU, GPU, FPGA) and whether to run in batch or interactive mode. For more information, see the Intel® oneAPI Base Toolkit [Get Started Guide](https://devcloud.intel.com/oneapi/get_started/).
 
@@ -159,19 +147,21 @@ You can submit build and run jobs through a Portable Bash Script (PBS). A job is
 
 ### Example Output
 
-The following example is for `03_sycl_migrated` for GPU with inputs files **frame10.ppm** and **frame11.ppm** on **Intel(R) UHD Graphics P630 \[0x3e96\]**.
+The following example is for `02_sycl_migrated` for CPU on **Intel(R) Xeon(R) CPU E5-2699 v4 @ 2.20GHz**.
 ```
-HSOpticalFlow Starting...
+16777216 elements
+threads per block  = 512
+Graph Launch iterations = 3
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
 
-Loading "frame10.ppm" ...
-Loading "frame11.ppm" ...
-Computing optical flow on CPU...
-Computing optical flow on GPU...
-
-Running on Intel(R) UHD Graphics P630 [0x3e96]
-Processing time on CPU: 2800.426270 (ms)
-Processing time on GPU: 1203.821533 (ms)
-L1 error : 0.018189
+Number of tasks(nodes) in the syclTaskFlow(graph) created manually = 7
+Cloned Graph Output..
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+Elapsed Time of SYCL TaskFlow Manual : 504.690613 (ms)
 ```
 
 ## License
