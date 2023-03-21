@@ -131,7 +131,7 @@ You can submit build and run jobs through a Portable Bash Script (PBS). A job is
 
 ### Example Output
 
-The following example is for `02_sycl_migrated` for CPU on **Intel(R) Xeon(R) CPU E5-2699 v4 @ 2.20GHz**.
+The following example is for `02_sycl_migrated` for GPU on **Intel(R) UHD Graphics [0x9a60]**.
 ```
 16777216 elements
 threads per block  = 512
@@ -141,12 +141,14 @@ Graph Launch iterations = 3
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
 
 Number of tasks(nodes) in the syclTaskFlow(graph) created manually = 7
-Cloned Graph Output..
+Cloned Graph Output.. 
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
-Elapsed Time of SYCL TaskFlow Manual : 504.690613 (ms)
+Elapsed Time of SYCL TaskFlow Manual : 151.666000 (ms)
+Built target run_gpu
 ```
+>**Note**: On Gen11 architecture double data types are not supported, hence change double data types to float data types.
 
 ## License
 Code samples are licensed under the MIT license. See
