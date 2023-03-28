@@ -38,7 +38,6 @@
 
 #include <taskflow/sycl/syclflow.hpp>
 
-using namespace sycl;
 using Time = std::chrono::steady_clock;
 using ms = std::chrono::milliseconds;
 using float_ms = std::chrono::duration<float, ms::period>;
@@ -239,20 +238,8 @@ void syclTaskFlowManual(float *inputVec_h, float *inputVec_d, double *outputVec_
 } 
 
 int main(int argc, char **argv) {
-  auto exception_handler = [](exception_list exceptions) {                  // error handling and queue creation
-
-        for (std::exception_ptr const& e : exceptions) {
-            try {
-                std::rethrow_exception(e);
-            }
-            catch (exception const& e) {
-                std::cout << "Caught asynchronous SYCL exception:\n"
-                          << e.what() << std::endl;
-            }
-        }
-    };
-  
-  queue q_ct1{default_selector_v, exception_handler};
+    
+  sycl::queue q_ct1{sycl::default_selector_v};
   std::cout << "Device: "
             << q_ct1.get_device().get_info<sycl::info::device::name>() << "\n";
   
