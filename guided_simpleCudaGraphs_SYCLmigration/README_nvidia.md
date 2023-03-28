@@ -86,6 +86,69 @@ You can run the programs for CPU and GPU. The commands indicate the device targe
     make run_cpu
     make run_gpu
     ```
+    
+### Build and Run the `simpleCudaGraphs` Sample in Intel® DevCloud
+
+When running a sample in the Intel® DevCloud, you must specify the compute node (CPU, GPU, FPGA) and whether to run in batch or interactive mode. For more information, see the Intel® oneAPI Base Toolkit [Get Started Guide](https://devcloud.intel.com/oneapi/get_started/).
+
+#### Build and Run Samples in Batch Mode (Optional)
+
+You can submit build and run jobs through a Portable Bash Script (PBS). A job is a script that submitted to PBS through the `qsub` utility. By default, the `qsub` utility does not inherit the current environment variables or your current working directory, so you might need to submit jobs to configure the environment variables. To indicate the correct working directory, you can use either absolute paths or pass the `-d \<dir\>` option to `qsub`.
+
+1. Open a terminal on a Linux* system.
+2. Log in to Intel® DevCloud.
+    ```
+    ssh devcloud
+    ```
+3. Download the samples.
+    ```
+    git clone https://github.com/oneapi-src/oneAPI-samples.git
+    ```
+4. Change to the sample directory.
+5. Configure the sample for a GPU node.
+   ```
+   qsub  -I  -l nodes=1:gpu:ppn=2 -d .
+   ```
+   - `-I` (upper case I) requests an interactive session.
+   - `-l nodes=1:gpu:ppn=2` (lower case L) assigns one full GPU node. 
+   - `-d .` makes the current folder as the working directory for the task.
+
+     |Available Nodes  |Command Options
+     |:---             |:---
+     | GPU	         |`qsub -l nodes=1:gpu:ppn=2 -d .`
+     | CPU	         |`qsub -l nodes=1:xeon:ppn=2 -d .`
+
+6. Perform build steps as you would on Linux.
+7. Run the programs.
+8. Clean up the project files.
+    ```
+    make clean
+    ```
+9. Disconnect from the Intel® DevCloud.
+    ```
+    exit
+    ```
+
+#### Example Output
+
+The following example is for `02_sycl_migrated` for GPU on **Intel(R) UHD Graphics [0x9a60]**.
+```
+16777216 elements
+threads per block  = 512
+Graph Launch iterations = 3
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+
+Number of tasks(nodes) in the syclTaskFlow(graph) created manually = 7
+Cloned Graph Output.. 
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+[syclTaskFlowManual] Host callback final reduced sum = 0.996214
+Elapsed Time of SYCL TaskFlow Manual : 151.666000 (ms)
+Built target run_gpu
+```
+>**Note**: On Gen11 architecture double data types are not supported, hence change double data types to float data types.
 
 ### Build and Run the `simpleCudaGraphs` Sample on NVIDIA GPU
 
@@ -108,7 +171,7 @@ To run simpleCudaGraphs SYCL migrated sample with CUDA NVIDIA backend we use CLA
     ./simplecg
     ```
 
-### Example Output
+#### Example Output
 
 The following example is for `02_sycl_migrated` for GPU on **Tesla P100-PCIE-12GB**.
 ```
