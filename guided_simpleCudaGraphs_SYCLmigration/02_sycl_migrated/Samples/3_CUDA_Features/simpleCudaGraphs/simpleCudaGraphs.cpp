@@ -31,12 +31,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sycl/sycl.hpp>
-#include <dpct/dpct.hpp>
-#include <vector>
 #include <chrono>
-
+#include <dpct/dpct.hpp>
+#include <sycl/sycl.hpp>
 #include <taskflow/sycl/syclflow.hpp>
+#include <vector>
 
 using Time = std::chrono::steady_clock;
 using ms = std::chrono::milliseconds;
@@ -52,9 +51,7 @@ typedef struct callBackData {
 } callBackData_t;
 
 void reduce(float *inputVec, double *outputVec, size_t inputSize,
-                       size_t outputSize, sycl::nd_item<3> item_ct1,
-                       double *tmp) {
-
+            size_t outputSize, sycl::nd_item<3> item_ct1, double *tmp) {
   auto cta = item_ct1.get_group();
   size_t globaltid = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                      item_ct1.get_local_id(2);
@@ -73,8 +70,7 @@ void reduce(float *inputVec, double *outputVec, size_t inputSize,
   double beta = temp_sum;
   double temp;
 
-  for (int i = tile_sg.get_local_linear_range() / 2; i > 0;
-       i >>= 1) {
+  for (int i = tile_sg.get_local_linear_range() / 2; i > 0; i >>= 1) {
     if (tile_sg.get_local_linear_id() < i) {
       temp = tmp[item_ct1.get_local_linear_id() + i];
       beta += temp;
@@ -88,21 +84,18 @@ void reduce(float *inputVec, double *outputVec, size_t inputSize,
   if (item_ct1.get_local_linear_id() == 0 &&
       item_ct1.get_group(2) < outputSize) {
     beta = 0.0;
-    
-    int cta_size = cta.get_local_linear_range(); 
-    
-    for (int i = 0; i < cta_size;
-         i += tile_sg.get_local_linear_range()) {
+
+    int cta_size = cta.get_local_linear_range();
+
+    for (int i = 0; i < cta_size; i += tile_sg.get_local_linear_range()) {
       beta += tmp[i];
     }
     outputVec[item_ct1.get_group(2)] = beta;
   }
 }
 
-void reduceFinal(double *inputVec, double *result,
-                            size_t inputSize, sycl::nd_item<3> item_ct1,
-                            double *tmp) {
-
+void reduceFinal(double *inputVec, double *result, size_t inputSize,
+                 sycl::nd_item<3> item_ct1, double *tmp) {
   auto cta = item_ct1.get_group();
   size_t globaltid = item_ct1.get_group(2) * item_ct1.get_local_range(2) +
                      item_ct1.get_local_id(2);
@@ -145,13 +138,12 @@ void reduceFinal(double *inputVec, double *result,
 
   if (item_ct1.get_local_linear_id() < 32) {
     // Fetch final intermediate sum from 2nd warp
-    if (item_ct1.get_local_range(2) >= 64) temp_sum +=
-        tmp[item_ct1.get_local_linear_id() + 32];
+    if (item_ct1.get_local_range(2) >= 64)
+      temp_sum += tmp[item_ct1.get_local_linear_id() + 32];
     // Reduce final warp using shuffle
-    for (int offset = tile_sg.get_local_linear_range() / 2;
-         offset > 0; offset /= 2) {
-      
-      temp_sum += tile_sg.shuffle_down(temp_sum, offset);   
+    for (int offset = tile_sg.get_local_linear_range() / 2; offset > 0;
+         offset /= 2) {
+      temp_sum += tile_sg.shuffle_down(temp_sum, offset);
     }
   }
   // write result for this block to global mem
@@ -172,79 +164,108 @@ void myHostNodeCallback(void *data) {
   *result = 0.0;  // reset the result
 }
 
-void syclTaskFlowManual(float *inputVec_h, float *inputVec_d, double *outputVec_d,
-                      double *result_d, size_t inputSize, size_t numOfBlocks, sycl::queue q_ct1) {
-   
+void syclTaskFlowManual(float *inputVec_h, float *inputVec_d,
+                        double *outputVec_d, double *result_d, size_t inputSize,
+                        size_t numOfBlocks, sycl::queue q_ct1) {
   tf::Taskflow tflow;
   tf::Executor exe;
-  
+
   double result_h = 0.0;
   size_t sf_Task = 0, tf_Task = 0;
-  
-  tf::Task syclKernelTask = tflow.emplace_on([&](tf::syclFlow& sf){
-    
-    tf::syclTask inputVec_h2d = sf.memcpy(inputVec_d, inputVec_h, sizeof(float) * inputSize) .name("inputVec_h2d");
-    tf::syclTask outputVec_memset = sf.memset(outputVec_d, 0, numOfBlocks * sizeof(double)) .name("outputVecd_memset");
-   
-    tf::syclTask reduce_kernel = sf.on([=] (sycl::handler& cgh){
-    sycl::local_accessor<double, 1> tmp(sycl::range<1>(THREADS_PER_BLOCK), cgh);
-    cgh.parallel_for(sycl::nd_range<3>{sycl::range<3>(1, 1, numOfBlocks) *
-                              sycl::range<3>(1, 1, THREADS_PER_BLOCK), sycl::range<3>(1, 1, THREADS_PER_BLOCK)}, [=](sycl::nd_item<3> item_ct1)[[intel::reqd_sub_group_size(SUB_GRP_SIZE)]]
-                     {
-                       reduce(inputVec_d, outputVec_d, inputSize, numOfBlocks, item_ct1, tmp.get_pointer());
-                     });
-      
-  }).name("reduce_kernel");
-  
-  tf::syclTask resultd_memset = sf.memset(result_d, 0, sizeof(double)). name("resultd_memset");
-  
-  tf::syclTask reduceFinal_kernel = sf.on([=] (sycl::handler& cgh){
-    sycl::local_accessor<double, 1> tmp(sycl::range<1>(THREADS_PER_BLOCK), cgh);
-    cgh.parallel_for(sycl::nd_range<3>{sycl::range<3>(1, 1, THREADS_PER_BLOCK), sycl::range<3>(1, 1, THREADS_PER_BLOCK)}, [=](sycl::nd_item<3> item_ct1)[[intel::reqd_sub_group_size(SUB_GRP_SIZE)]]
-                     {
-                       reduceFinal(outputVec_d, result_d, numOfBlocks, item_ct1, tmp.get_pointer());
-                     });
-      
-  }).name("reduceFinal_kernel");
-  
-  tf::syclTask result_d2h = sf.memcpy(&result_h, result_d, sizeof(double)) .name("resulth_d2h");
-  
-  reduce_kernel.succeed(inputVec_h2d, outputVec_memset).precede(reduceFinal_kernel);
-  reduceFinal_kernel.succeed(resultd_memset).precede(result_d2h);
-  
-  sf_Task = sf.num_tasks();
-  },q_ct1).name("syclKernelTask");
+
+  tf::Task syclKernelTask =
+      tflow
+          .emplace_on(
+              [&](tf::syclFlow &sf) {
+                tf::syclTask inputVec_h2d =
+                    sf.memcpy(inputVec_d, inputVec_h, sizeof(float) * inputSize)
+                        .name("inputVec_h2d");
+                tf::syclTask outputVec_memset =
+                    sf.memset(outputVec_d, 0, numOfBlocks * sizeof(double))
+                        .name("outputVecd_memset");
+
+                tf::syclTask reduce_kernel =
+                    sf.on([=](sycl::handler &cgh) {
+                        sycl::local_accessor<double, 1> tmp(
+                            sycl::range<1>(THREADS_PER_BLOCK), cgh);
+                        cgh.parallel_for(
+                            sycl::nd_range<3>{
+                                sycl::range<3>(1, 1, numOfBlocks) *
+                                    sycl::range<3>(1, 1, THREADS_PER_BLOCK),
+                                sycl::range<3>(1, 1, THREADS_PER_BLOCK)},
+                            [=](sycl::nd_item<3> item_ct1)
+                                [[intel::reqd_sub_group_size(SUB_GRP_SIZE)]] {
+                                  reduce(inputVec_d, outputVec_d, inputSize,
+                                         numOfBlocks, item_ct1,
+                                         tmp.get_pointer());
+                                });
+                      }).name("reduce_kernel");
+
+                tf::syclTask resultd_memset =
+                    sf.memset(result_d, 0, sizeof(double))
+                        .name("resultd_memset");
+
+                tf::syclTask reduceFinal_kernel =
+                    sf.on([=](sycl::handler &cgh) {
+                        sycl::local_accessor<double, 1> tmp(
+                            sycl::range<1>(THREADS_PER_BLOCK), cgh);
+                        cgh.parallel_for(
+                            sycl::nd_range<3>{
+                                sycl::range<3>(1, 1, THREADS_PER_BLOCK),
+                                sycl::range<3>(1, 1, THREADS_PER_BLOCK)},
+                            [=](sycl::nd_item<3> item_ct1)
+                                [[intel::reqd_sub_group_size(SUB_GRP_SIZE)]] {
+                                  reduceFinal(outputVec_d, result_d,
+                                              numOfBlocks, item_ct1,
+                                              tmp.get_pointer());
+                                });
+                      }).name("reduceFinal_kernel");
+
+                tf::syclTask result_d2h =
+                    sf.memcpy(&result_h, result_d, sizeof(double))
+                        .name("resulth_d2h");
+
+                reduce_kernel.succeed(inputVec_h2d, outputVec_memset)
+                    .precede(reduceFinal_kernel);
+                reduceFinal_kernel.succeed(resultd_memset).precede(result_d2h);
+
+                sf_Task = sf.num_tasks();
+              },
+              q_ct1)
+          .name("syclKernelTask");
 
   callBackData_t hostFnData = {0};
   hostFnData.data = &result_h;
   hostFnData.fn_name = "syclTaskFlowManual";
 
-  tf::Task syclHostTask = tflow.emplace([&](){
-    myHostNodeCallback(&hostFnData);
-  }).name("syclHostTask");
-  
+  tf::Task syclHostTask =
+      tflow.emplace([&]() { myHostNodeCallback(&hostFnData); })
+          .name("syclHostTask");
+
   syclHostTask.succeed(syclKernelTask);
-  
+
   tf_Task = tflow.num_tasks() - 1;
 
-  exe.run_n(tflow, GRAPH_LAUNCH_ITERATIONS).wait();    // launch & runs the tflow 3 times
+  exe.run_n(tflow, GRAPH_LAUNCH_ITERATIONS)
+      .wait();  // launch & runs the tflow 3 times
 
-  printf("\nNumber of tasks(nodes) in the syclTaskFlow(graph) created manually = %zu\n", sf_Task + tf_Task);
-  
+  printf(
+      "\nNumber of tasks(nodes) in the syclTaskFlow(graph) created manually = "
+      "%zu\n",
+      sf_Task + tf_Task);
+
   printf("Cloned Graph Output.. \n");
   tf::Taskflow tflow_clone(std::move(tflow));
   exe.run_n(tflow_clone, GRAPH_LAUNCH_ITERATIONS).wait();
- 
-} 
+}
 
 int main(int argc, char **argv) {
-    
   sycl::queue q_ct1{sycl::default_selector_v};
   std::cout << "Device: "
             << q_ct1.get_device().get_info<sycl::info::device::name>() << "\n";
-  
+
   size_t size = 1 << 24;  // number of elements to reduce
-  size_t maxBlocks = 512; 
+  size_t maxBlocks = 512;
 
   printf("%zu elements\n", size);
   printf("threads per block  = %d\n", THREADS_PER_BLOCK);
@@ -262,17 +283,15 @@ int main(int argc, char **argv) {
 
   auto startTimer1 = Time::now();
   syclTaskFlowManual(inputVec_h, inputVec_d, outputVec_d, result_d, size,
-                   maxBlocks, q_ct1);
+                     maxBlocks, q_ct1);
   auto stopTimer1 = Time::now();
   auto Timer_duration1 =
-      std::chrono::duration_cast<float_ms> (stopTimer1 - startTimer1)
-          .count();
+      std::chrono::duration_cast<float_ms>(stopTimer1 - startTimer1).count();
   printf("Elapsed Time of SYCL TaskFlow Manual : %f (ms)\n", Timer_duration1);
-  
+
   sycl::free(inputVec_d, q_ct1);
   sycl::free(outputVec_d, q_ct1);
   sycl::free(result_d, q_ct1);
   sycl::free(inputVec_h, q_ct1);
   return EXIT_SUCCESS;
 }
-
