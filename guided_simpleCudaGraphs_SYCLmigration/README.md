@@ -17,7 +17,6 @@
 ## Source code
 
 - [CUDA](https://github.com/NVIDIA/cuda-samples/tree/v11.8/Samples/3_CUDA_Features/simpleCudaGraphs) - Source code 
-- [SYCL](https://github.com/ShwethaSelma/simpleCudaGraphs/tree/master/guided_simpleCudaGraphs_SYCLmigration) - Migrated Code
 
 ## Purpose
 
