@@ -11,8 +11,8 @@
 | Property              | Description
 |:---                   |:---
 | OS                    | Ubuntu* 20.04
-| Hardware              | Skylake with GEN9 or newer
-| Software              | Intel® oneAPI DPC++/C++ Compiler
+| Hardware              | SYCL compatible hardware
+| Software              | open source oneAPI DPC++/C++ Compiler
 
 ## Source code
 
