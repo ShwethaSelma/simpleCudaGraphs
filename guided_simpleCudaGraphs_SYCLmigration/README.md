@@ -1,14 +1,23 @@
 ﻿# `SimpleCudaGraphs` Sample
 
-The `simpleCudaGraphs` sample demonstrates the migration of CUDA Graph explicit API calls to SYCL using Taskflow programming model which manages a task dependency graph. This sample is implemented using SYCL* by migrating code from original CUDA source code and offloading computations to a GPU/CPU.
+## Prior knowledge
 
-| Property               | Description
-|:---                    |:---
-| What you will learn    | How to begin migrating CUDA to SYCL
-| Time to complete       | 15 minutes
+- [CUDA](https://docs.nvidia.com/cuda/cuda-c-programming-guide/) - Beginner
+- [SYCL](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html) - Beginner
+- [SYCLomatic Manual](https://github.com/oneapi-src/SYCLomatic#syclomatic)
 
->**Note**: This sample is based on the [simpleCudaGraphs](https://github.com/NVIDIA/cuda-samples/tree/v11.8/Samples/3_CUDA_Features/simpleCudaGraphs) sample in the NVIDIA/cuda-samples GitHub repository.
+## Prerequisites
 
+| Property              | Description
+|:---                   |:---
+| OS                    | Ubuntu* 20.04
+| Hardware              | Skylake with GEN9 or newer
+| Software              | Intel® oneAPI DPC++/C++ Compiler
+
+## Source code
+
+- [CUDA](https://github.com/NVIDIA/cuda-samples/tree/v11.8/Samples/3_CUDA_Features/simpleCudaGraphs) - Source code 
+- [SYCL](https://github.com/ShwethaSelma/simpleCudaGraphs/tree/master/guided_simpleCudaGraphs_SYCLmigration) - Migrated Code
 
 ## Purpose
 
@@ -21,24 +30,46 @@ This sample contains two versions in the following folders:
 | `01_dpct_output`              | Contains output of Intel® SYCLomatic Compatibility Tool used to migrate SYCL-compliant code from CUDA code. This SYCL code has some unmigrated code that has to be manually fixed to get full functionality. (The code does not functionally work as supplied.)
 | `02_sycl_migrated`            | Contains manually migrated SYCL code from CUDA code.
 
+## CUDA features demonstrated
 
+This sample demonstrates the migration of the following prominent CUDA features: 
+- CUDA Graph APIs
+- CUDA Stream Capture
+- Shared memory
+- CUDA streams 
+- Cooperative groups
+- Warp level primitives
 
-## Prerequisites
+## CUDA source code evaluation
 
-| Property              | Description
-|:---                   |:---
-| OS                    | Ubuntu* 20.04
-| Hardware              | Skylake with GEN9 or newer
-| Software              | Intel® oneAPI DPC++/C++ Compiler
+The simpleCudaGraphs sample demonstrates the usage of CUDA Graphs API’s by performing element reduction. The CUDA Graph API are demonstrated in two CUDA functions cudaGraphsManual() which uses explicit CUDA Graph APIs and cudaGraphsUsingStreamCapture() which uses stream capture APIs. Reduction is performed in two CUDA kernels reduce () and reduceFinal(). We only migrate the cudaGraphsManual() using SYCLomatic Tool and manually migrating the unmigrated code section using [Taskflow](https://github.com/taskflow/taskflow) Programming Model. We do not migrate cudaGraphsUsingStreamCapture() because CUDA Stream Capture APIs are not yet supported in SYCL.
 
-## Key Implementation Details
+## Workflow For CUDA to SYCL migration
 
-SYCL simpleCudaGraphs sample performs reduction operarion to obtain the sum value from 16777216 number of elements in two different computational kernels reduce and reduceFinal. These kernels are scheduled through taskflow which develops a simple and powerful task programming model to enable efficient implementations of heterogeneous decomposition strategies and leverages both static and dynamic task graph constructions to incorporate computational patterns.
-
+Refer [Workflow](https://www.intel.com/content/www/us/en/developer/tools/oneapi/training/cuda-sycl-migration-workflow.html#gs.s2njvh) for details.
 
 ## Set Environment Variables
 
 When working with the command-line interface (CLI), you should configure the oneAPI toolkits using environment variables. Set up your CLI environment by sourcing the `setvars` script every time you open a new terminal window. This practice ensures that your compiler, libraries, and tools are ready for development.
+
+## Tool assisted migration – SYCLomatic 
+
+For this sample, the Intel SYCLomatic Compatibility tool automatically migrates ~80% of the CUDA code to SYCL. Follow these steps to generate the SYCL code using the compatibility tool:
+
+1. git clone https://github.com/NVIDIA/cuda-samples.git
+2. cd cuda-samples/Samples/3_CUDA_Features/simpleCudaGraphs/
+3. Generate a compilation database with intercept-build
+   ```
+   intercept-build make
+   ```
+4. The above step creates a JSON file named compile_commands.json with all the compiler invocations and stores the names of the input files and the compiler options.
+5. Pass the JSON file as input to the Intel SYCLomatic Compatibility Tool. The result is written to a folder named dpct_output. The --in-root specifies path to the root of the source tree to be migrated.
+   ```
+   c2s -p compile_commands.json --in-root ../../..
+   ```
+   
+## Manual workarounds 
+   
 
 ## Build the `simpleCudaGraphs` Sample for CPU and GPU
 
@@ -87,48 +118,6 @@ You can run the programs for CPU and GPU. The commands indicate the device targe
     make run_gpu
     ```
 
-### Build and Run the `simpleCudaGraphs` Sample in Intel® DevCloud
-
-When running a sample in the Intel® DevCloud, you must specify the compute node (CPU, GPU, FPGA) and whether to run in batch or interactive mode. For more information, see the Intel® oneAPI Base Toolkit [Get Started Guide](https://devcloud.intel.com/oneapi/get_started/).
-
-#### Build and Run Samples in Batch Mode (Optional)
-
-You can submit build and run jobs through a Portable Bash Script (PBS). A job is a script that submitted to PBS through the `qsub` utility. By default, the `qsub` utility does not inherit the current environment variables or your current working directory, so you might need to submit jobs to configure the environment variables. To indicate the correct working directory, you can use either absolute paths or pass the `-d \<dir\>` option to `qsub`.
-
-1. Open a terminal on a Linux* system.
-2. Log in to Intel® DevCloud.
-    ```
-    ssh devcloud
-    ```
-3. Download the samples.
-    ```
-    git clone https://github.com/oneapi-src/oneAPI-samples.git
-    ```
-4. Change to the sample directory.
-5. Configure the sample for a GPU node.
-   ```
-   qsub  -I  -l nodes=1:gpu:ppn=2 -d .
-   ```
-   - `-I` (upper case I) requests an interactive session.
-   - `-l nodes=1:gpu:ppn=2` (lower case L) assigns one full GPU node. 
-   - `-d .` makes the current folder as the working directory for the task.
-
-     |Available Nodes  |Command Options
-     |:---             |:---
-     | GPU	         |`qsub -l nodes=1:gpu:ppn=2 -d .`
-     | CPU	         |`qsub -l nodes=1:xeon:ppn=2 -d .`
-
-6. Perform build steps as you would on Linux.
-7. Run the programs.
-8. Clean up the project files.
-    ```
-    make clean
-    ```
-9. Disconnect from the Intel® DevCloud.
-    ```
-    exit
-    ```
-
 ### Example Output
 
 The following example is for `02_sycl_migrated` for GPU on **Intel(R) UHD Graphics [0x9a60]**.
@@ -145,7 +134,6 @@ Cloned Graph Output..
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
 [syclTaskFlowManual] Host callback final reduced sum = 0.996214
-Elapsed Time of SYCL TaskFlow Manual : 151.666000 (ms)
 Built target run_gpu
 ```
 >**Note**: On Gen11 architecture double data types are not supported, hence change double data types to float data types.
