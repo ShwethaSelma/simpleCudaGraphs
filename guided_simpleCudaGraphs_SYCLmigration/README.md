@@ -237,7 +237,7 @@ The following warnings in the "DPCT1XXX" format are gentereated by the tool to i
 If an error occurs, you can get more details by running `make` with
 the `VERBOSE=1` argument:
 ```
-make VERBOSE=1
+$ make VERBOSE=1
 ```
 If you receive an error message, troubleshoot the problem using the **Diagnostics Utility for Intel® oneAPI Toolkits**. The diagnostic utility provides configuration and system checks to help find missing dependencies, permissions errors, and other issues. See the [Diagnostics Utility for Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/diagnostic-utility-user-guide/top.html) for more information on using the utility.
   
