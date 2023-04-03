@@ -228,8 +228,8 @@ The following warnings in the "DPCT1XXX" format are gentereated by the tool to i
    
    You can run the programs for CPU and GPU. The commands indicate the device target.
    ```
-   make run_cpu
-   make run_gpu
+   $ make run_cpu
+   $ make run_gpu
    ```   
 
 #### Troubleshooting
