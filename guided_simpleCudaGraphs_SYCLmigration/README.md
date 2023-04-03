@@ -50,7 +50,19 @@ This sample demonstrates the migration of the following prominent CUDA features:
 
 SYCL simpleCudaGraphs sample performs reduction operarion to obtain the sum value from 16777216 number of elements in two different computational kernels reduce and reduceFinal. These kernels are scheduled through taskflow which develops a simple and powerful task programming model to enable efficient implementations of heterogeneous decomposition strategies and leverages both static and dynamic task graph constructions to incorporate computational patterns.
 
-## Tool assisted migration – SYCLomatic 
+## Build the `simpleCudaGraphs` Sample for CPU and GPU
+
+> **Note**: If you have not already done so, set up your CLI
+> environment by sourcing  the `setvars` script in the root of your oneAPI installation.
+>
+> Linux*:
+> - For system wide installations: `. /opt/intel/oneapi/setvars.sh`
+> - For private installations: ` . ~/intel/oneapi/setvars.sh`
+> - For non-POSIX shells, like csh, use the following command: `bash -c 'source <install-dir>/setvars.sh ; exec csh'`
+>
+> For more information on configuring environment variables, see [Use the setvars Script with Linux* or macOS*](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-programming-guide/top/oneapi-development-environment-setup/use-the-setvars-script-with-linux-or-macos.html).
+
+### Tool assisted migration – SYCLomatic 
 
 For this sample, the Intel SYCLomatic Compatibility tool automatically migrates ~80% of the CUDA code to SYCL. Follow these steps to generate the SYCL code using the compatibility tool:
 
@@ -66,7 +78,7 @@ For this sample, the Intel SYCLomatic Compatibility tool automatically migrates 
    c2s -p compile_commands.json --in-root ../../.. --use-custom-helper=api
    ```
    
-## Manual workarounds 
+### Manual workarounds 
 
 The following warnings in the "DPCT1XXX" format are gentereated by the tool to indicate the code not migrated by the tool and need to be manually modified in order to complete the migration. 
 
@@ -199,18 +211,6 @@ The following warnings in the "DPCT1XXX" format are gentereated by the tool to i
 
 > **Note**: The SYCL Task Graph Programming Model, syclFlow, leverages the out-of-order property of the SYCL queue to design a simple and efficient scheduling algorithm using topological sort. SYCL can be slower than CUDA graphs because of execution overheads.
 
-## Build the `simpleCudaGraphs` Sample for CPU and GPU
-
-> **Note**: If you have not already done so, set up your CLI
-> environment by sourcing  the `setvars` script in the root of your oneAPI installation.
->
-> Linux*:
-> - For system wide installations: `. /opt/intel/oneapi/setvars.sh`
-> - For private installations: ` . ~/intel/oneapi/setvars.sh`
-> - For non-POSIX shells, like csh, use the following command: `bash -c 'source <install-dir>/setvars.sh ; exec csh'`
->
-> For more information on configuring environment variables, see [Use the setvars Script with Linux* or macOS*](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-programming-guide/top/oneapi-development-environment-setup/use-the-setvars-script-with-linux-or-macos.html).
-
 ### On Linux*
 
 1. Change to the sample directory.
@@ -241,7 +241,7 @@ $ make VERBOSE=1
 ```
 If you receive an error message, troubleshoot the problem using the **Diagnostics Utility for Intel® oneAPI Toolkits**. The diagnostic utility provides configuration and system checks to help find missing dependencies, permissions errors, and other issues. See the [Diagnostics Utility for Intel® oneAPI Toolkits User Guide](https://www.intel.com/content/www/us/en/develop/documentation/diagnostic-utility-user-guide/top.html) for more information on using the utility.
   
-### Example Output
+## Example Output
 
 The following example is for `02_sycl_migrated` for GPU on **Intel(R) UHD Graphics [0x9a60]**.
 ```
