@@ -11,7 +11,7 @@ The simpleCudaGraphs sample demonstrates the migration of CUDA Graph explicit AP
 
 The sample shows the migration of simple explicit CUDA Graph API's such as cudaGraphCreate, cudaGraphAddMemcpyNode, cudaGraphClone etc, to SYCL equivalent API's using [Taskflow](https://github.com/taskflow/taskflow) programming Model. The parallel implementation demonstrates the use of CUDA Graph API's, CUDA streams, shared memory, cooperative groups and warp level primitives. 
 
-We use Intel open-sources SYCLomatic migration tool which assists developers in porting CUDA code automatically to SYCL code. To finish the process, developers complete the rest of the coding manually and then tune to the desired level of performance for the target architecture.
+> **Note**: We use Intel® open-sources SYCLomatic migration tool which assists developers in porting CUDA code automatically to SYCL code. To finish the process, developers complete the rest of the coding manually and then tune to the desired level of performance for the target architecture. User's can also use Intel® DPC++ Compatibility Tool which comes along with the Intel® oneAPI Base Toolkit.
 
 This sample contains two versions in the following folders:
 
@@ -20,15 +20,15 @@ This sample contains two versions in the following folders:
 | `01_dpct_output`              | Contains output of Intel® SYCLomatic Compatibility Tool used to migrate SYCL-compliant code from CUDA code. This SYCL code has some unmigrated code that has to be manually fixed to get full functionality. (The code does not functionally work as supplied.)
 | `02_sycl_migrated`            | Contains manually migrated SYCL code from CUDA code.
 
+### Workflow For CUDA to SYCL migration
+
+Refer [Workflow](https://www.intel.com/content/www/us/en/developer/tools/oneapi/training/cuda-sycl-migration-workflow.html#gs.s2njvh) for details.
+
 ### CUDA source code evaluation
 
 The simpleCudaGraphs sample demonstrates the usage of CUDA Graphs API’s by performing element reduction. The CUDA Graph API are demonstrated in two CUDA functions cudaGraphsManual() which uses explicit CUDA Graph APIs and cudaGraphsUsingStreamCapture() which uses stream capture APIs. Reduction is performed in two CUDA kernels reduce () and reduceFinal(). We only migrate the cudaGraphsManual() using SYCLomatic Tool and manually migrating the unmigrated code section using [Taskflow](https://github.com/taskflow/taskflow) Programming Model. We do not migrate cudaGraphsUsingStreamCapture() because CUDA Stream Capture APIs are not yet supported in SYCL.
 
 This sample is migrated from NVIDIA CUDA sample. See the [SimpleCudaGraphs](https://github.com/NVIDIA/cuda-samples/tree/v11.8/Samples/3_CUDA_Features/simpleCudaGraphs) sample in the NVIDIA/cuda-samples GitHub.
-
-### Workflow For CUDA to SYCL migration
-
-Refer [Workflow](https://www.intel.com/content/www/us/en/developer/tools/oneapi/training/cuda-sycl-migration-workflow.html#gs.s2njvh) for details.
 
 ## Prerequisites
 
@@ -64,7 +64,7 @@ SYCL simpleCudaGraphs sample performs reduction operarion to obtain the sum valu
 
 ### Tool assisted migration – SYCLomatic 
 
-For this sample, the Intel SYCLomatic Compatibility tool automatically migrates ~80% of the CUDA code to SYCL. Follow these steps to generate the SYCL code using the compatibility tool:
+For this sample, the Intel® SYCLomatic Compatibility tool automatically migrates ~80% of the CUDA code to SYCL. Follow these steps to generate the SYCL code using the compatibility tool:
 
 1. git clone https://github.com/NVIDIA/cuda-samples.git
 2. cd cuda-samples/Samples/3_CUDA_Features/simpleCudaGraphs/
@@ -73,7 +73,7 @@ For this sample, the Intel SYCLomatic Compatibility tool automatically migrates 
    intercept-build make
    ```
 4. The above step creates a JSON file named compile_commands.json with all the compiler invocations and stores the names of the input files and the compiler options.
-5. Pass the JSON file as input to the Intel SYCLomatic Compatibility Tool. The result is written to a folder named dpct_output. The --in-root specifies path to the root of the source tree to be migrated.
+5. Pass the JSON file as input to the Intel® SYCLomatic Compatibility Tool. The result is written to a folder named dpct_output. The --in-root specifies path to the root of the source tree to be migrated.
    ```
    c2s -p compile_commands.json --in-root ../../.. --use-custom-helper=api
    ```
